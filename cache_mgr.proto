@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package cache_mgr;
+// 相对路径;包名
+option go_package = "./cache_mgr_pb";
+
+// 更新余额Req(由消费端 t_update_balance 回调)
+message UpdateBalanceReq {
+    int64 uid = 1;
+    int64 cur_type = 2;
+    int64 balance = 3;
+    int64 balance_modify_time_s = 4;   // 余额变更时间(秒)
+    int64 balance_modify_time_ms = 5;  // 余额变更时间的毫秒部分(0-999)
+}
+
+// 更新余额Rsp
+message UpdateBalanceRsp {
+}
+
+service CacheMgr {
+    rpc UpdateBalance(UpdateBalanceReq) returns (UpdateBalanceRsp);  // 更新余额缓存到ckv(由消费端回调)
+}
+
+/*
+生成项目框架
+goctl rpc protoc cache_mgr.proto --go_out=. --go-grpc_out=. --zrpc_out=.
+*/

@@ -1,0 +1,32 @@
+Name: cachemgr.rpc
+ListenOn: 0.0.0.0:8080
+Timeout: 10000
+Etcd:
+  Hosts:
+    - etcd:2379  # etcd 集群节点1
+    - etcd2:2379 # etcd 集群节点2, 任一节点可用即可
+    - etcd3:2379 # etcd 集群节点3
+  Key: cachemgr.rpc
+Middlewares:
+  Breaker: false  # 关闭服务端熔断
+  Shedding: false # 关闭自适应降载（service overloaded，不是熔断，一并关掉）
+CpuThreshold: 0 # 0 关闭CPU过载降载兜底保护
+
+# Redis 缓存配置（余额缓存 balance|{uid}）
+RedisConfig:
+  Host: redis-master:6379  # 开发环境
+  Type: node  # node-单机, cluster-集群
+  Pass: ""    # 无密码
+
+# Prometheus 指标采集：go-zero 会另起一个独立 HTTP 端口暴露 /metrics
+Prometheus:
+  Host: 0.0.0.0
+  Port: 9090
+  Path: /metrics
+
+# 链路追踪：go-zero 通过 OTLP 协议发送 trace 到 Tempo
+Telemetry:
+  Name: cache_mgr
+  Endpoint: tempo:4318
+  Batcher: otlphttp
+  Sampler: 1.0
