@@ -135,6 +135,96 @@ func (*UpdateBalanceRsp) Descriptor() ([]byte, []int) {
 	return file_cache_mgr_proto_rawDescGZIP(), []int{1}
 }
 
+// 更新relation Req(由消费端 t_update_relation 回调)
+type UpdateRelationReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Uid           int64                  `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRelationReq) Reset() {
+	*x = UpdateRelationReq{}
+	mi := &file_cache_mgr_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateRelationReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateRelationReq) ProtoMessage() {}
+
+func (x *UpdateRelationReq) ProtoReflect() protoreflect.Message {
+	mi := &file_cache_mgr_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateRelationReq.ProtoReflect.Descriptor instead.
+func (*UpdateRelationReq) Descriptor() ([]byte, []int) {
+	return file_cache_mgr_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UpdateRelationReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateRelationReq) GetUid() int64 {
+	if x != nil {
+		return x.Uid
+	}
+	return 0
+}
+
+// 更新relation Rsp
+type UpdateRelationRsp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRelationRsp) Reset() {
+	*x = UpdateRelationRsp{}
+	mi := &file_cache_mgr_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateRelationRsp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateRelationRsp) ProtoMessage() {}
+
+func (x *UpdateRelationRsp) ProtoReflect() protoreflect.Message {
+	mi := &file_cache_mgr_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateRelationRsp.ProtoReflect.Descriptor instead.
+func (*UpdateRelationRsp) Descriptor() ([]byte, []int) {
+	return file_cache_mgr_proto_rawDescGZIP(), []int{3}
+}
+
 var File_cache_mgr_proto protoreflect.FileDescriptor
 
 const file_cache_mgr_proto_rawDesc = "" +
@@ -146,9 +236,14 @@ const file_cache_mgr_proto_rawDesc = "" +
 	"\abalance\x18\x03 \x01(\x03R\abalance\x121\n" +
 	"\x15balance_modify_time_s\x18\x04 \x01(\x03R\x12balanceModifyTimeS\x123\n" +
 	"\x16balance_modify_time_ms\x18\x05 \x01(\x03R\x13balanceModifyTimeMs\"\x12\n" +
-	"\x10UpdateBalanceRsp2U\n" +
+	"\x10UpdateBalanceRsp\">\n" +
+	"\x11UpdateRelationReq\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x10\n" +
+	"\x03uid\x18\x02 \x01(\x03R\x03uid\"\x13\n" +
+	"\x11UpdateRelationRsp2\xa3\x01\n" +
 	"\bCacheMgr\x12I\n" +
-	"\rUpdateBalance\x12\x1b.cache_mgr.UpdateBalanceReq\x1a\x1b.cache_mgr.UpdateBalanceRspB\x10Z\x0e./cache_mgr_pbb\x06proto3"
+	"\rUpdateBalance\x12\x1b.cache_mgr.UpdateBalanceReq\x1a\x1b.cache_mgr.UpdateBalanceRsp\x12L\n" +
+	"\x0eUpdateRelation\x12\x1c.cache_mgr.UpdateRelationReq\x1a\x1c.cache_mgr.UpdateRelationRspB\x10Z\x0e./cache_mgr_pbb\x06proto3"
 
 var (
 	file_cache_mgr_proto_rawDescOnce sync.Once
@@ -162,16 +257,20 @@ func file_cache_mgr_proto_rawDescGZIP() []byte {
 	return file_cache_mgr_proto_rawDescData
 }
 
-var file_cache_mgr_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_cache_mgr_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_cache_mgr_proto_goTypes = []any{
-	(*UpdateBalanceReq)(nil), // 0: cache_mgr.UpdateBalanceReq
-	(*UpdateBalanceRsp)(nil), // 1: cache_mgr.UpdateBalanceRsp
+	(*UpdateBalanceReq)(nil),  // 0: cache_mgr.UpdateBalanceReq
+	(*UpdateBalanceRsp)(nil),  // 1: cache_mgr.UpdateBalanceRsp
+	(*UpdateRelationReq)(nil), // 2: cache_mgr.UpdateRelationReq
+	(*UpdateRelationRsp)(nil), // 3: cache_mgr.UpdateRelationRsp
 }
 var file_cache_mgr_proto_depIdxs = []int32{
 	0, // 0: cache_mgr.CacheMgr.UpdateBalance:input_type -> cache_mgr.UpdateBalanceReq
-	1, // 1: cache_mgr.CacheMgr.UpdateBalance:output_type -> cache_mgr.UpdateBalanceRsp
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: cache_mgr.CacheMgr.UpdateRelation:input_type -> cache_mgr.UpdateRelationReq
+	1, // 2: cache_mgr.CacheMgr.UpdateBalance:output_type -> cache_mgr.UpdateBalanceRsp
+	3, // 3: cache_mgr.CacheMgr.UpdateRelation:output_type -> cache_mgr.UpdateRelationRsp
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -188,7 +287,7 @@ func file_cache_mgr_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cache_mgr_proto_rawDesc), len(file_cache_mgr_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

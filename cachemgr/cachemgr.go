@@ -14,11 +14,14 @@ import (
 )
 
 type (
-	UpdateBalanceReq = cache_mgr_pb.UpdateBalanceReq
-	UpdateBalanceRsp = cache_mgr_pb.UpdateBalanceRsp
+	UpdateBalanceReq  = cache_mgr_pb.UpdateBalanceReq
+	UpdateBalanceRsp  = cache_mgr_pb.UpdateBalanceRsp
+	UpdateRelationReq = cache_mgr_pb.UpdateRelationReq
+	UpdateRelationRsp = cache_mgr_pb.UpdateRelationRsp
 
 	CacheMgr interface {
 		UpdateBalance(ctx context.Context, in *UpdateBalanceReq, opts ...grpc.CallOption) (*UpdateBalanceRsp, error)
+		UpdateRelation(ctx context.Context, in *UpdateRelationReq, opts ...grpc.CallOption) (*UpdateRelationRsp, error)
 	}
 
 	defaultCacheMgr struct {
@@ -35,4 +38,9 @@ func NewCacheMgr(cli zrpc.Client) CacheMgr {
 func (m *defaultCacheMgr) UpdateBalance(ctx context.Context, in *UpdateBalanceReq, opts ...grpc.CallOption) (*UpdateBalanceRsp, error) {
 	client := cache_mgr_pb.NewCacheMgrClient(m.cli.Conn())
 	return client.UpdateBalance(ctx, in, opts...)
+}
+
+func (m *defaultCacheMgr) UpdateRelation(ctx context.Context, in *UpdateRelationReq, opts ...grpc.CallOption) (*UpdateRelationRsp, error) {
+	client := cache_mgr_pb.NewCacheMgrClient(m.cli.Conn())
+	return client.UpdateRelation(ctx, in, opts...)
 }

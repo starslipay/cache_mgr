@@ -27,3 +27,8 @@ func (s *CacheMgrServer) UpdateBalance(ctx context.Context, in *cache_mgr_pb.Upd
 	l := logic.NewUpdateBalanceLogic(ctx, s.svcCtx)
 	return l.UpdateBalance(in)
 }
+
+func (s *CacheMgrServer) UpdateRelation(ctx context.Context, in *cache_mgr_pb.UpdateRelationReq) (*cache_mgr_pb.UpdateRelationRsp, error) {
+	l := logic.NewUpdateRelationLogic(ctx, s.svcCtx)
+	return l.UpdateRelation(in)
+}

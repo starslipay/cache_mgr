@@ -17,8 +17,19 @@ message UpdateBalanceReq {
 message UpdateBalanceRsp {
 }
 
+// 更新relation Req(由消费端 t_update_relation 回调)
+message UpdateRelationReq {
+    string user_id = 1;
+    int64 uid = 2;
+}
+
+// 更新relation Rsp
+message UpdateRelationRsp {
+}
+
 service CacheMgr {
     rpc UpdateBalance(UpdateBalanceReq) returns (UpdateBalanceRsp);  // 更新余额缓存到ckv(由消费端回调)
+    rpc UpdateRelation(UpdateRelationReq) returns (UpdateRelationRsp);  // 更新relation缓存到redis(由消费端回调)
 }
 
 /*

@@ -15,6 +15,9 @@ import (
 // RedisKeyBalancePrefix 余额缓存 key 前缀: balance|{uid} -> balance=xx&balance_modify_time_s=xx&balance_modify_time_ms=xx&cur_type=xx
 const RedisKeyBalancePrefix = "balance|"
 
+// RedisKeyRelationPrefix relation 缓存 key 前缀: relation|{user_id} -> uid=<uid>
+const RedisKeyRelationPrefix = "relation|"
+
 // setBalanceScript 乐观锁 CAS 写入余额缓存, 版本校验与写入在 Redis 内原子完成
 // (go-zero 的 redis.Redis 未暴露 WATCH, Lua 脚本是 Redis 官方的原子 CAS 实现,
 // 相比 WATCH/MULTI/EXEC 没有并发冲突重试窗口, 且只需一次往返)
@@ -81,7 +84,11 @@ return 1
 
 // updateBalanceCache 更新 ckv(redis) 中 balance|{uid} 的余额信息, 乐观锁 CAS 设计:
 //  1. 先获取, 解析版本号(余额变更时间秒/毫秒)并判断新旧, 缓存不旧于新数据则跳过
-//  2. 构造新值, CAS set; 若 set 时版本号与获取时不一致(期间被并发修改), 直接报错
+//  2. 构造新值, CAS set; 若 set 时版本号与获取时不一致(期间被并发修改), 重新获取后重试
+//
+// 重试的意义: 同一用户的多条变更消息可能被不同分区并行消费, 并发 CAS 必然冲突;
+// 若冲突即放弃, 版本最新的那条消息可能被丢弃, 缓存会停留在较旧的余额上。
+// 重试时重新读取版本号, 再由"新旧判断"保证只写入更新的数据, 顺序错乱也不会回退。
 //
 // modifyTime 必须与写入数据库 t_c_account 的余额变更时间一致
 // 缓存属尽力而为: 失败仅记录日志, 不影响余额变更主流程
@@ -90,48 +97,64 @@ func updateBalanceCache(ctx context.Context, svcCtx *svc.ServiceContext, uid int
 	// 新版本号: 秒为 UNIX 秒; 毫秒只取秒内的毫秒部分(0-999), 而不是按毫秒换算的完整时间戳
 	newS, newMs := modifyTime.Unix(), modifyTime.UnixMilli()%1000
 
-	// 1. 先获取, 解析当前版本号; key 不存在视为版本 0(首次写入)
-	var expectS, expectMs int64
-	cached, err := svcCtx.RedisClient.GetCtx(ctx, key)
-	if err != nil && !errors.Is(err, redis.Nil) {
-		logx.WithContext(ctx).Errorf("get balance cache failed, uid: %d, err: %v", uid, err)
-		return
-	}
-	if err == nil {
-		expectS, expectMs = parseBalanceVersion(cached)
-		// 新旧判断: 先比秒, 同一秒再比毫秒; 缓存不旧于新数据则无需更新
-		if expectS > newS || (expectS == newS && expectMs >= newMs) {
-			logx.WithContext(ctx).Infof("balance cache has newer version, skip, uid: %d, balance: %d, version: %d/%d, new: %d/%d",
-				uid, balance, expectS, expectMs, newS, newMs)
-			return
-		}
-	}
-
-	// 2. 构造新值
+	// 构造新值(重试期间不变)
 	newVal := url.Values{}
 	newVal.Set("balance", strconv.FormatInt(balance, 10))
 	newVal.Set("balance_modify_time_s", strconv.FormatInt(newS, 10))
 	newVal.Set("balance_modify_time_ms", strconv.FormatInt(newMs, 10))
 	// 货币类型, 与 t_c_account.cur_type 同源
 	newVal.Set("cur_type", strconv.FormatInt(curType, 10))
+	encoded := newVal.Encode()
 
-	// 3. CAS set: 版本号与获取时不一致则报错
-	resp, err := svcCtx.RedisClient.ScriptRunCtx(ctx, setBalanceScript, []string{key},
-		strconv.FormatInt(expectS, 10), strconv.FormatInt(expectMs, 10),
-		newVal.Encode(),
-		strconv.FormatInt(newS, 10), strconv.FormatInt(newMs, 10))
-	if err != nil {
-		logx.WithContext(ctx).Errorf("cas set balance cache failed, uid: %d, balance: %d, err: %v", uid, balance, err)
-		return
-	}
-	if n, ok := resp.(int64); ok {
+	const maxRetries = 3
+	for i := 1; i <= maxRetries; i++ {
+		// 1. 先获取, 解析当前版本号; key 不存在视为版本 0(首次写入)
+		var expectS, expectMs int64
+		cached, err := svcCtx.RedisClient.GetCtx(ctx, key)
+		if err != nil && !errors.Is(err, redis.Nil) {
+			logx.WithContext(ctx).Errorf("get balance cache failed, uid: %d, err: %v", uid, err)
+			return
+		}
+		if err == nil {
+			expectS, expectMs = parseBalanceVersion(cached)
+			// 新旧判断: 先比秒, 同一秒再比毫秒; 缓存不旧于新数据则无需更新
+			if expectS > newS || (expectS == newS && expectMs >= newMs) {
+				logx.WithContext(ctx).Infof("balance cache has newer version, skip, uid: %d, balance: %d, version: %d/%d, new: %d/%d",
+					uid, balance, expectS, expectMs, newS, newMs)
+				return
+			}
+		}
+
+		// 2. CAS set: 版本号与获取时不一致则冲突
+		resp, err := svcCtx.RedisClient.ScriptRunCtx(ctx, setBalanceScript, []string{key},
+			strconv.FormatInt(expectS, 10), strconv.FormatInt(expectMs, 10),
+			encoded,
+			strconv.FormatInt(newS, 10), strconv.FormatInt(newMs, 10))
+		if err != nil {
+			logx.WithContext(ctx).Errorf("cas set balance cache failed, uid: %d, balance: %d, err: %v", uid, balance, err)
+			return
+		}
+		n, ok := resp.(int64)
+		if !ok {
+			return
+		}
+
 		switch n {
-		case -1, -2:
-			// 乐观锁冲突: 获取后版本被并发修改(或 key 被并发删除), 直接报错
-			logx.WithContext(ctx).Errorf("balance cache cas conflict, version changed after get, uid: %d, balance: %d, expect version: %d/%d",
-				uid, balance, expectS, expectMs)
+		case 1:
+			return // 写入成功
 		case 0:
+			// 缓存已有更新(或同版本)数据, 本条消息无需写入
 			logx.WithContext(ctx).Infof("balance cache has newer version, skip, uid: %d, balance: %d", uid, balance)
+			return
+		case -1, -2:
+			// 乐观锁冲突: 获取后版本被并发修改(或 key 被并发删除), 重新获取版本号后重试
+			if i == maxRetries {
+				logx.WithContext(ctx).Errorf("balance cache cas conflict after %d retries, uid: %d, balance: %d, expect version: %d/%d",
+					maxRetries, uid, balance, expectS, expectMs)
+				return
+			}
+			logx.WithContext(ctx).Infof("balance cache cas conflict, retry %d/%d, uid: %d, balance: %d", i, maxRetries, uid, balance)
+			continue
 		}
 	}
 }
