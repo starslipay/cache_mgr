@@ -14,6 +14,8 @@ import (
 )
 
 type (
+	DeleteRelationReq = cache_mgr_pb.DeleteRelationReq
+	DeleteRelationRsp = cache_mgr_pb.DeleteRelationRsp
 	UpdateBalanceReq  = cache_mgr_pb.UpdateBalanceReq
 	UpdateBalanceRsp  = cache_mgr_pb.UpdateBalanceRsp
 	UpdateRelationReq = cache_mgr_pb.UpdateRelationReq
@@ -22,6 +24,7 @@ type (
 	CacheMgr interface {
 		UpdateBalance(ctx context.Context, in *UpdateBalanceReq, opts ...grpc.CallOption) (*UpdateBalanceRsp, error)
 		UpdateRelation(ctx context.Context, in *UpdateRelationReq, opts ...grpc.CallOption) (*UpdateRelationRsp, error)
+		DeleteRelation(ctx context.Context, in *DeleteRelationReq, opts ...grpc.CallOption) (*DeleteRelationRsp, error)
 	}
 
 	defaultCacheMgr struct {
@@ -43,4 +46,9 @@ func (m *defaultCacheMgr) UpdateBalance(ctx context.Context, in *UpdateBalanceRe
 func (m *defaultCacheMgr) UpdateRelation(ctx context.Context, in *UpdateRelationReq, opts ...grpc.CallOption) (*UpdateRelationRsp, error) {
 	client := cache_mgr_pb.NewCacheMgrClient(m.cli.Conn())
 	return client.UpdateRelation(ctx, in, opts...)
+}
+
+func (m *defaultCacheMgr) DeleteRelation(ctx context.Context, in *DeleteRelationReq, opts ...grpc.CallOption) (*DeleteRelationRsp, error) {
+	client := cache_mgr_pb.NewCacheMgrClient(m.cli.Conn())
+	return client.DeleteRelation(ctx, in, opts...)
 }

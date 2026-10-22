@@ -32,3 +32,8 @@ func (s *CacheMgrServer) UpdateRelation(ctx context.Context, in *cache_mgr_pb.Up
 	l := logic.NewUpdateRelationLogic(ctx, s.svcCtx)
 	return l.UpdateRelation(in)
 }
+
+func (s *CacheMgrServer) DeleteRelation(ctx context.Context, in *cache_mgr_pb.DeleteRelationReq) (*cache_mgr_pb.DeleteRelationRsp, error) {
+	l := logic.NewDeleteRelationLogic(ctx, s.svcCtx)
+	return l.DeleteRelation(in)
+}

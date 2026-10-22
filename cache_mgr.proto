@@ -27,9 +27,19 @@ message UpdateRelationReq {
 message UpdateRelationRsp {
 }
 
+// 删除relation缓存 Req(注销用户后由消费端回调)
+message DeleteRelationReq {
+    string user_id = 1;
+}
+
+// 删除relation缓存 Rsp
+message DeleteRelationRsp {
+}
+
 service CacheMgr {
     rpc UpdateBalance(UpdateBalanceReq) returns (UpdateBalanceRsp);  // 更新余额缓存到ckv(由消费端回调)
     rpc UpdateRelation(UpdateRelationReq) returns (UpdateRelationRsp);  // 更新relation缓存到redis(由消费端回调)
+    rpc DeleteRelation(DeleteRelationReq) returns (DeleteRelationRsp);  // 删除relation缓存(注销用户后由消费端回调)
 }
 
 /*

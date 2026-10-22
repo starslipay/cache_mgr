@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	CacheMgr_UpdateBalance_FullMethodName  = "/cache_mgr.CacheMgr/UpdateBalance"
 	CacheMgr_UpdateRelation_FullMethodName = "/cache_mgr.CacheMgr/UpdateRelation"
+	CacheMgr_DeleteRelation_FullMethodName = "/cache_mgr.CacheMgr/DeleteRelation"
 )
 
 // CacheMgrClient is the client API for CacheMgr service.
@@ -29,6 +30,7 @@ const (
 type CacheMgrClient interface {
 	UpdateBalance(ctx context.Context, in *UpdateBalanceReq, opts ...grpc.CallOption) (*UpdateBalanceRsp, error)
 	UpdateRelation(ctx context.Context, in *UpdateRelationReq, opts ...grpc.CallOption) (*UpdateRelationRsp, error)
+	DeleteRelation(ctx context.Context, in *DeleteRelationReq, opts ...grpc.CallOption) (*DeleteRelationRsp, error)
 }
 
 type cacheMgrClient struct {
@@ -59,12 +61,23 @@ func (c *cacheMgrClient) UpdateRelation(ctx context.Context, in *UpdateRelationR
 	return out, nil
 }
 
+func (c *cacheMgrClient) DeleteRelation(ctx context.Context, in *DeleteRelationReq, opts ...grpc.CallOption) (*DeleteRelationRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteRelationRsp)
+	err := c.cc.Invoke(ctx, CacheMgr_DeleteRelation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CacheMgrServer is the server API for CacheMgr service.
 // All implementations must embed UnimplementedCacheMgrServer
 // for forward compatibility.
 type CacheMgrServer interface {
 	UpdateBalance(context.Context, *UpdateBalanceReq) (*UpdateBalanceRsp, error)
 	UpdateRelation(context.Context, *UpdateRelationReq) (*UpdateRelationRsp, error)
+	DeleteRelation(context.Context, *DeleteRelationReq) (*DeleteRelationRsp, error)
 	mustEmbedUnimplementedCacheMgrServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedCacheMgrServer) UpdateBalance(context.Context, *UpdateBalance
 }
 func (UnimplementedCacheMgrServer) UpdateRelation(context.Context, *UpdateRelationReq) (*UpdateRelationRsp, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateRelation not implemented")
+}
+func (UnimplementedCacheMgrServer) DeleteRelation(context.Context, *DeleteRelationReq) (*DeleteRelationRsp, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteRelation not implemented")
 }
 func (UnimplementedCacheMgrServer) mustEmbedUnimplementedCacheMgrServer() {}
 func (UnimplementedCacheMgrServer) testEmbeddedByValue()                  {}
@@ -138,6 +154,24 @@ func _CacheMgr_UpdateRelation_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CacheMgr_DeleteRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRelationReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CacheMgrServer).DeleteRelation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CacheMgr_DeleteRelation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CacheMgrServer).DeleteRelation(ctx, req.(*DeleteRelationReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CacheMgr_ServiceDesc is the grpc.ServiceDesc for CacheMgr service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var CacheMgr_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRelation",
 			Handler:    _CacheMgr_UpdateRelation_Handler,
+		},
+		{
+			MethodName: "DeleteRelation",
+			Handler:    _CacheMgr_DeleteRelation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
